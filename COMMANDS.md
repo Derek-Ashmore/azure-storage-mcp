@@ -9,3 +9,9 @@ npx claude-flow@alpha swarm "review the INITIAL.md in root and create a detailed
 > Results Tag: ```1-initial-implement```
 
 npx claude-flow@alpha swarm "implement the requirements in INITIAL.md in the root by using the plan you developed and documented in technical_implementation_plan in folder plans. You are logged into Azure and can use that login. Please make me aware of any additional resources you need." --claude
+
+# Establish test GitHub workflows
+
+> Results Tag: ```2-test workflows```
+
+npx claude-flow@alpha swarm "implement the actions in TEST-WORKFLOWS.md in folder instructions. Please make me aware of any additional resources you need." --claude
