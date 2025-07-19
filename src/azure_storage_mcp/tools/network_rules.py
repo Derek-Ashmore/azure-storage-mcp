@@ -62,11 +62,14 @@ class NetworkRulesTools:
             # Get Azure client
             client = await self._get_storage_client(request.subscription_id)
             
-            # Get network rules
-            network_rules = client.storage_accounts.get_network_rule_set(
+            # Get storage account properties to access network rules
+            account_props = client.storage_accounts.get_properties(
                 request.resource_group,
                 request.account_name
             )
+            
+            # Get network rules from account properties
+            network_rules = account_props.network_rule_set
             
             # Create response
             execution_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
@@ -76,19 +79,19 @@ class NetworkRulesTools:
             )
             
             response = NetworkRules(
-                default_action=network_rules.default_action.value,
+                default_action=network_rules.default_action.value if hasattr(network_rules.default_action, 'value') else str(network_rules.default_action),
                 ip_rules=[
                     IpRule(
                         ip_address_or_range=rule.ip_address_or_range,
-                        action=rule.action.value
+                        action=rule.action.value if hasattr(rule.action, 'value') else str(rule.action)
                     )
                     for rule in (network_rules.ip_rules or [])
                 ],
                 virtual_network_rules=[
                     VirtualNetworkRule(
                         subnet_id=rule.virtual_network_resource_id,
-                        action=rule.action.value,
-                        state=rule.state.value
+                        action=rule.action.value if hasattr(rule.action, 'value') else str(rule.action),
+                        state=rule.state.value if hasattr(rule.state, 'value') else str(rule.state)
                     )
                     for rule in (network_rules.virtual_network_rules or [])
                 ],
@@ -99,7 +102,7 @@ class NetworkRulesTools:
                     )
                     for rule in (network_rules.resource_access_rules or [])
                 ],
-                bypass=network_rules.bypass.value if network_rules.bypass else "None",
+                bypass=network_rules.bypass.value if network_rules.bypass and hasattr(network_rules.bypass, 'value') else str(network_rules.bypass) if network_rules.bypass else "None",
                 metadata=metadata,
                 summary=self._create_network_rules_summary(network_rules, request.account_name)
             )
@@ -176,7 +179,7 @@ class NetworkRulesTools:
                         name=connection.name,
                         private_endpoint_id=connection.private_endpoint.id if connection.private_endpoint else "",
                         connection_state=connection.private_link_service_connection_state.status,
-                        provisioning_state=connection.provisioning_state.value,
+                        provisioning_state=connection.provisioning_state.value if hasattr(connection.provisioning_state, 'value') else str(connection.provisioning_state),
                         network_interface_info=network_interface_info,
                         dns_zones=[],  # Would need additional API call to populate
                         actions_required=connection.private_link_service_connection_state.actions_required.split(",") if connection.private_link_service_connection_state.actions_required else [],
@@ -240,13 +243,13 @@ class NetworkRulesTools:
     
     def _create_network_rules_summary(self, network_rules, account_name: str) -> str:
         """Create human-readable summary for network rules."""
-        default_action = network_rules.default_action.value
+        default_action = network_rules.default_action.value if hasattr(network_rules.default_action, 'value') else str(network_rules.default_action)
         
         ip_rule_count = len(network_rules.ip_rules or [])
         vnet_rule_count = len(network_rules.virtual_network_rules or [])
         resource_rule_count = len(network_rules.resource_access_rules or [])
         
-        bypass_services = network_rules.bypass.value if network_rules.bypass else "None"
+        bypass_services = network_rules.bypass.value if network_rules.bypass and hasattr(network_rules.bypass, 'value') else str(network_rules.bypass) if network_rules.bypass else "None"
         
         rules_summary = []
         if ip_rule_count > 0:

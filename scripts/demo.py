@@ -7,6 +7,7 @@ Shows how to use the MCP tools programmatically.
 import asyncio
 import json
 import sys
+import traceback
 from typing import Dict, Any
 
 from azure_storage_mcp.auth import AzureAuthManager
@@ -23,7 +24,7 @@ from azure_storage_mcp.models import (
 def pretty_print(title: str, data: Dict[str, Any]) -> None:
     """Pretty print JSON data with a title."""
     print(f"\n{'='*60}")
-    print(f"🔍 {title}")
+    print(f"[INFO] {title}")
     print(f"{'='*60}")
     print(json.dumps(data, indent=2, default=str))
 
@@ -39,7 +40,7 @@ async def demo_list_storage_accounts(subscription_id: str) -> None:
     pretty_print("Storage Accounts List", result.dict())
 
 
-async def demo_storage_account_details(subscription_id: str, resource_group: str, account_name: str) -> None:
+async def demo_storage_account_details(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting storage account details."""
     auth_manager = AzureAuthManager('cli')
     tools = StorageAccountsTools(auth_manager)
@@ -53,11 +54,14 @@ async def demo_storage_account_details(subscription_id: str, resource_group: str
     try:
         result = await tools.get_storage_account_details(request)
         pretty_print(f"Storage Account Details - {account_name}", result.dict())
+        return True  # Indicate success
     except Exception as e:
-        print(f"❌ Error getting storage account details: {e}")
+        print(f"[ERROR] Error getting storage account details: {e}")
+        print(f"[DEBUG] Stack trace:\n{traceback.format_exc()}")
+        return False  # Indicate failure
 
 
-async def demo_network_rules(subscription_id: str, resource_group: str, account_name: str) -> None:
+async def demo_network_rules(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting network rules."""
     auth_manager = AzureAuthManager('cli')
     tools = NetworkRulesTools(auth_manager)
@@ -71,11 +75,14 @@ async def demo_network_rules(subscription_id: str, resource_group: str, account_
     try:
         result = await tools.get_network_rules(request)
         pretty_print(f"Network Rules - {account_name}", result.dict())
+        return True  # Indicate success
     except Exception as e:
-        print(f"❌ Error getting network rules: {e}")
+        print(f"[ERROR] Error getting network rules: {e}")
+        print(f"[DEBUG] Stack trace:\n{traceback.format_exc()}")
+        return False  # Indicate failure
 
 
-async def demo_private_endpoints(subscription_id: str, resource_group: str, account_name: str) -> None:
+async def demo_private_endpoints(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting private endpoints."""
     auth_manager = AzureAuthManager('cli')
     tools = NetworkRulesTools(auth_manager)
@@ -89,11 +96,14 @@ async def demo_private_endpoints(subscription_id: str, resource_group: str, acco
     try:
         result = await tools.get_private_endpoints(request)
         pretty_print(f"Private Endpoints - {account_name}", result.dict())
+        return True  # Indicate success
     except Exception as e:
-        print(f"❌ Error getting private endpoints: {e}")
+        print(f"[ERROR] Error getting private endpoints: {e}")
+        print(f"[DEBUG] Stack trace:\n{traceback.format_exc()}")
+        return False  # Indicate failure
 
 
-async def demo_metrics(subscription_id: str, resource_group: str, account_name: str) -> None:
+async def demo_metrics(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting storage metrics."""
     auth_manager = AzureAuthManager('cli')
     tools = MetricsTools(auth_manager)
@@ -109,27 +119,31 @@ async def demo_metrics(subscription_id: str, resource_group: str, account_name: 
     try:
         result = await tools.get_storage_metrics(request)
         pretty_print(f"Storage Metrics - {account_name}", result.dict())
+        return True  # Indicate success
     except Exception as e:
-        print(f"❌ Error getting storage metrics: {e}")
+        print(f"[ERROR] Error getting storage metrics: {e}")
+        print(f"[DEBUG] Stack trace:\n{traceback.format_exc()}")
+        return False  # Indicate failure
 
 
 async def main() -> None:
     """Main demo function."""
-    print("🚀 Azure Storage MCP Server Demo")
+    print("[DEMO] Azure Storage MCP Server Demo")
     print("=" * 60)
     
     # Test authentication
-    print("🔐 Testing authentication...")
+    print("[AUTH] Testing authentication...")
     auth_manager = AzureAuthManager('cli')
     
     try:
         is_authenticated = await auth_manager.test_authentication()
         if not is_authenticated:
-            print("❌ Authentication failed. Please run 'az login' first.")
+            print("[ERROR] Authentication failed. Please run 'az login' first.")
             sys.exit(1)
-        print("✅ Authentication successful!")
+        print("[SUCCESS] Authentication successful!")
     except Exception as e:
-        print(f"❌ Authentication error: {e}")
+        print(f"[ERROR] Authentication error: {e}")
+        print(f"[DEBUG] Stack trace:\n{traceback.format_exc()}")
         sys.exit(1)
     
     # Get subscription ID from command line or use default
@@ -143,15 +157,15 @@ async def main() -> None:
                                   capture_output=True, text=True)
             subscription_id = result.stdout.strip()
             if not subscription_id:
-                print("❌ Could not get subscription ID. Please provide it as an argument.")
+                print("[ERROR] Could not get subscription ID. Please provide it as an argument.")
                 print("Usage: python demo.py <subscription_id>")
                 sys.exit(1)
         except Exception as e:
-            print(f"❌ Error getting subscription ID: {e}")
+            print(f"[ERROR] Error getting subscription ID: {e}")
             print("Usage: python demo.py <subscription_id>")
             sys.exit(1)
     
-    print(f"📋 Using subscription: {subscription_id}")
+    print(f"[INFO] Using subscription: {subscription_id}")
     
     # Demo listing storage accounts
     await demo_list_storage_accounts(subscription_id)
@@ -166,43 +180,57 @@ async def main() -> None:
         
         if result.storage_accounts:
             first_account = result.storage_accounts[0]
-            print(f"\n🎯 Running detailed demos for: {first_account.name}")
+            print(f"\n[DEMO] Running detailed demos for: {first_account.name}")
+            
+            # Track errors
+            errors = []
             
             # Demo detailed account information
-            await demo_storage_account_details(
+            if not await demo_storage_account_details(
                 subscription_id, 
                 first_account.resource_group, 
                 first_account.name
-            )
+            ):
+                errors.append("storage account details")
             
             # Demo network rules
-            await demo_network_rules(
+            if not await demo_network_rules(
                 subscription_id, 
                 first_account.resource_group, 
                 first_account.name
-            )
+            ):
+                errors.append("network rules")
             
             # Demo private endpoints
-            await demo_private_endpoints(
+            if not await demo_private_endpoints(
                 subscription_id, 
                 first_account.resource_group, 
                 first_account.name
-            )
+            ):
+                errors.append("private endpoints")
             
             # Demo metrics (may require additional permissions)
-            await demo_metrics(
+            if not await demo_metrics(
                 subscription_id, 
                 first_account.resource_group, 
                 first_account.name
-            )
+            ):
+                errors.append("storage metrics")
+            
+            # Check for errors
+            if errors:
+                print(f"\n[ERROR] Demo failed for: {', '.join(errors)}")
+                sys.exit(1)
         else:
-            print("ℹ️  No storage accounts found in subscription.")
+            print("[INFO] No storage accounts found in subscription.")
             
     except Exception as e:
-        print(f"❌ Error during demo: {e}")
+        print(f"[ERROR] Error during demo: {e}")
+        print(f"[DEBUG] Stack trace:\n{traceback.format_exc()}")
+        sys.exit(1)
     
-    print("\n✅ Demo completed!")
-    print("🌟 To run the MCP server: uv run azure-storage-mcp")
+    print("\n[SUCCESS] Demo completed!")
+    print("[INFO] To run the MCP server: uv run azure-storage-mcp")
 
 
 if __name__ == "__main__":

@@ -317,19 +317,19 @@ class StorageAccountsTools:
             )
         
         return NetworkConfiguration(
-            default_action=network_rules.default_action.value,
+            default_action=network_rules.default_action.value if hasattr(network_rules.default_action, 'value') else str(network_rules.default_action),
             ip_rules=[
                 IpRule(
                     ip_address_or_range=rule.ip_address_or_range,
-                    action=rule.action.value
+                    action=rule.action.value if hasattr(rule.action, 'value') else str(rule.action)
                 )
                 for rule in (network_rules.ip_rules or [])
             ],
             virtual_network_rules=[
                 VirtualNetworkRule(
                     subnet_id=rule.virtual_network_resource_id,
-                    action=rule.action.value,
-                    state=rule.state.value
+                    action=rule.action.value if hasattr(rule.action, 'value') else str(rule.action),
+                    state=rule.state.value if hasattr(rule.state, 'value') else str(rule.state)
                 )
                 for rule in (network_rules.virtual_network_rules or [])
             ],
@@ -340,7 +340,7 @@ class StorageAccountsTools:
                 )
                 for rule in (network_rules.resource_access_rules or [])
             ],
-            bypass=network_rules.bypass.value if network_rules.bypass else "None"
+            bypass=network_rules.bypass.value if network_rules.bypass and hasattr(network_rules.bypass, 'value') else str(network_rules.bypass) if network_rules.bypass else "None"
         )
     
     async def _build_blob_service_properties(self, blob_props) -> BlobServiceProperties:
@@ -359,15 +359,15 @@ class StorageAccountsTools:
             )
         
         return BlobServiceProperties(
-            versioning_enabled=blob_props.is_versioning_enabled if hasattr(blob_props, 'is_versioning_enabled') else False,
-            change_feed_enabled=blob_props.change_feed.enabled if hasattr(blob_props, 'change_feed') and blob_props.change_feed else False,
-            soft_delete_enabled=blob_props.delete_retention_policy.enabled if hasattr(blob_props, 'delete_retention_policy') and blob_props.delete_retention_policy else False,
+            versioning_enabled=bool(blob_props.is_versioning_enabled) if hasattr(blob_props, 'is_versioning_enabled') and blob_props.is_versioning_enabled is not None else False,
+            change_feed_enabled=bool(blob_props.change_feed.enabled) if hasattr(blob_props, 'change_feed') and blob_props.change_feed and blob_props.change_feed.enabled is not None else False,
+            soft_delete_enabled=bool(blob_props.delete_retention_policy.enabled) if hasattr(blob_props, 'delete_retention_policy') and blob_props.delete_retention_policy and blob_props.delete_retention_policy.enabled is not None else False,
             soft_delete_retention_days=blob_props.delete_retention_policy.days if hasattr(blob_props, 'delete_retention_policy') and blob_props.delete_retention_policy and blob_props.delete_retention_policy.enabled else None,
-            container_soft_delete_enabled=blob_props.container_delete_retention_policy.enabled if hasattr(blob_props, 'container_delete_retention_policy') and blob_props.container_delete_retention_policy else False,
+            container_soft_delete_enabled=bool(blob_props.container_delete_retention_policy.enabled) if hasattr(blob_props, 'container_delete_retention_policy') and blob_props.container_delete_retention_policy and blob_props.container_delete_retention_policy.enabled is not None else False,
             container_soft_delete_retention_days=blob_props.container_delete_retention_policy.days if hasattr(blob_props, 'container_delete_retention_policy') and blob_props.container_delete_retention_policy and blob_props.container_delete_retention_policy.enabled else None,
-            restore_policy_enabled=blob_props.restore_policy.enabled if hasattr(blob_props, 'restore_policy') and blob_props.restore_policy else False,
+            restore_policy_enabled=bool(blob_props.restore_policy.enabled) if hasattr(blob_props, 'restore_policy') and blob_props.restore_policy and blob_props.restore_policy.enabled is not None else False,
             restore_policy_days=blob_props.restore_policy.days if hasattr(blob_props, 'restore_policy') and blob_props.restore_policy and blob_props.restore_policy.enabled else None,
-            last_access_time_tracking_enabled=blob_props.last_access_time_tracking_policy.enabled if hasattr(blob_props, 'last_access_time_tracking_policy') and blob_props.last_access_time_tracking_policy else False
+            last_access_time_tracking_enabled=bool(blob_props.last_access_time_tracking_policy.enabled) if hasattr(blob_props, 'last_access_time_tracking_policy') and blob_props.last_access_time_tracking_policy and blob_props.last_access_time_tracking_policy.enabled is not None else False
         )
     
     def _create_list_summary(

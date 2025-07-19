@@ -290,6 +290,42 @@ The server uses structured logging with JSON format for easy parsing:
 - **Credential Security**: Credentials are never logged or exposed
 - **Least Privilege**: Only request necessary permissions
 
+## CI/CD Workflows
+
+This project includes automated testing workflows that validate the MCP server functionality on both Linux and Windows environments.
+
+### Available Workflows
+
+1. **Test MCP Server - Linux** (`.github/workflows/test-linux.yml`)
+   - Runs on Ubuntu latest
+   - Tests the demo.py script with Azure authentication
+   - Triggers on push, pull request, and manual dispatch
+
+2. **Test MCP Server - Windows** (`.github/workflows/test-windows.yml`)
+   - Runs on Windows latest  
+   - Tests the demo.py script with Azure authentication
+   - Triggers on push, pull request, and manual dispatch
+
+### Required Secrets
+
+Both workflows require the following GitHub secrets to be configured:
+
+- `AZURE_TENANT_ID` - Your Azure tenant ID
+- `AZURE_CLIENT_ID` - Service principal client ID
+- `AZURE_CLIENT_SECRET` - Service principal client secret
+- `AZURE_SUBSCRIPTION_ID` - Target Azure subscription ID
+
+### Workflow Features
+
+- **Cross-platform testing**: Ensures compatibility on both Linux and Windows
+- **Service principal authentication**: Uses Azure service principal for CI/CD
+- **Error capture**: Automatically uploads failure logs as artifacts
+- **Demo validation**: Runs the complete demo.py script to validate all MCP tools
+
+### Manual Trigger
+
+You can manually trigger the workflows from the GitHub Actions tab using workflow_dispatch.
+
 ## Troubleshooting
 
 ### Common Issues
