@@ -179,7 +179,7 @@ class NetworkRulesTools:
                         name=connection.name,
                         private_endpoint_id=connection.private_endpoint.id if connection.private_endpoint else "",
                         connection_state=connection.private_link_service_connection_state.status,
-                        provisioning_state=connection.provisioning_state.value,
+                        provisioning_state=connection.provisioning_state.value if hasattr(connection.provisioning_state, 'value') else str(connection.provisioning_state),
                         network_interface_info=network_interface_info,
                         dns_zones=[],  # Would need additional API call to populate
                         actions_required=connection.private_link_service_connection_state.actions_required.split(",") if connection.private_link_service_connection_state.actions_required else [],

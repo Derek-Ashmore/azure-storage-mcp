@@ -317,19 +317,19 @@ class StorageAccountsTools:
             )
         
         return NetworkConfiguration(
-            default_action=network_rules.default_action.value,
+            default_action=network_rules.default_action.value if hasattr(network_rules.default_action, 'value') else str(network_rules.default_action),
             ip_rules=[
                 IpRule(
                     ip_address_or_range=rule.ip_address_or_range,
-                    action=rule.action.value
+                    action=rule.action.value if hasattr(rule.action, 'value') else str(rule.action)
                 )
                 for rule in (network_rules.ip_rules or [])
             ],
             virtual_network_rules=[
                 VirtualNetworkRule(
                     subnet_id=rule.virtual_network_resource_id,
-                    action=rule.action.value,
-                    state=rule.state.value
+                    action=rule.action.value if hasattr(rule.action, 'value') else str(rule.action),
+                    state=rule.state.value if hasattr(rule.state, 'value') else str(rule.state)
                 )
                 for rule in (network_rules.virtual_network_rules or [])
             ],
@@ -340,7 +340,7 @@ class StorageAccountsTools:
                 )
                 for rule in (network_rules.resource_access_rules or [])
             ],
-            bypass=network_rules.bypass.value if network_rules.bypass else "None"
+            bypass=network_rules.bypass.value if network_rules.bypass and hasattr(network_rules.bypass, 'value') else str(network_rules.bypass) if network_rules.bypass else "None"
         )
     
     async def _build_blob_service_properties(self, blob_props) -> BlobServiceProperties:
