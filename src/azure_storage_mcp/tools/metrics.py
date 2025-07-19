@@ -98,7 +98,7 @@ class MetricsTools:
                                     point = MetricDataPoint(
                                         timestamp=data_point.time_stamp,
                                         value=value,
-                                        unit=metric.unit.value,
+                                        unit=metric.unit.value if hasattr(metric.unit, 'value') else str(metric.unit),
                                         aggregation_type=request.aggregation_type
                                     )
                                     data_points.append(point)
@@ -177,13 +177,13 @@ class MetricsTools:
             
             return [
                 MetricDefinition(
-                    name=definition.name.value,
+                    name=definition.name.value if hasattr(definition.name, 'value') else str(definition.name),
                     display_name=definition.display_name,
                     description=definition.display_description or "",
-                    unit=definition.unit.value,
-                    primary_aggregation_type=definition.primary_aggregation_type.value,
-                    supported_aggregation_types=[agg.value for agg in definition.supported_aggregation_types],
-                    dimensions=[dim.value for dim in definition.dimensions] if definition.dimensions else []
+                    unit=definition.unit.value if hasattr(definition.unit, 'value') else str(definition.unit),
+                    primary_aggregation_type=definition.primary_aggregation_type.value if hasattr(definition.primary_aggregation_type, 'value') else str(definition.primary_aggregation_type),
+                    supported_aggregation_types=[agg.value if hasattr(agg, 'value') else str(agg) for agg in definition.supported_aggregation_types],
+                    dimensions=[dim.value if hasattr(dim, 'value') else str(dim) for dim in definition.dimensions] if definition.dimensions else []
                 )
                 for definition in definitions.value
             ]
