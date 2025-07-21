@@ -17,8 +17,8 @@ RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 # Install uv package manager (matching workflow setup)
 RUN pip install uv
 
-# Copy project files
-COPY pyproject.toml uv.lock* ./
+# Copy project files (including README.md required by pyproject.toml)
+COPY pyproject.toml uv.lock* README.md LICENSE ./
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 
