@@ -16,7 +16,7 @@ npx claude-flow@alpha swarm "implement the requirements in INITIAL.md in the roo
 
 # Establish test GitHub workflows
 
-> Results Tag: ```2-test workflows```
+> Results Tag: ```2-test-workflows```
 
 npx claude-flow@alpha swarm "implement the actions in TEST-WORKFLOWS.md in folder instructions. Please make me aware of any additional resources you need." --claude
 
@@ -73,3 +73,9 @@ versioning_enabled
   Input should be a valid boolean [type=bool_type, input_value=None, input_type=NoneType]
     For further information visit https://errors.pydantic.dev/2.11/v/bool_type
 ```
+
+# Add OCI Image
+
+> Results Tag: ```3-add-oci-image```
+
+npx claude-flow@alpha swarm "implement the actions in ADD-PPODMAN.md in folder instructions. Please make me aware of any additional resources you need." --claude
