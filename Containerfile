@@ -28,6 +28,7 @@ RUN uv sync
 # Set environment variables for the MCP server
 ENV PYTHONPATH=/app/src
 ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Create a non-root user for security
 RUN useradd -m -u 1000 mcpuser && chown -R mcpuser:mcpuser /app

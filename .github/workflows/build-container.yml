@@ -40,8 +40,8 @@ jobs:
     - name: Test image can start
       run: |
         echo "Testing if container can start properly..."
-        # Test that the container can start and import the module
-        podman run --rm ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test python -c "import azure_storage_mcp.server; print('✅ Server module loaded successfully')"
+        # Test that the container can start and import the module using uv run
+        podman run --rm ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test uv run python -c "import azure_storage_mcp.server; print('✅ Server module loaded successfully')"
         
     - name: Azure CLI Login for container testing
       uses: azure/login@v1
