@@ -1,0 +1,109 @@
+name: Build and Publish OCI Image
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/azure-storage-mcp
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set image name to lowercase
+      run: |
+        echo "IMAGE_NAME_LOWER=$(echo '${{ env.IMAGE_NAME }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      
+    - name: Set up Podman
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y podman
+        
+    - name: Build OCI image with Podman
+      run: |
+        echo "Building OCI image with Podman..."
+        echo "Image name: ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test"
+        podman build -t ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test .
+        
+    - name: Test image can start
+      run: |
+        echo "Testing if container can start properly..."
+        # Test that the container can start and import the module using uv run
+        podman run --rm ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test uv run python -c "import azure_storage_mcp.server; print('✅ Server module loaded successfully')"
+        
+    - name: Azure CLI Login for container testing
+      uses: azure/login@v1
+      with:
+        creds: |
+          {
+            "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+            "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+            "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+            "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+          }
+          
+    - name: Test container with Azure credentials
+      run: |
+        echo "Testing MCP Server demo in container..."
+        set -e  # Exit on any error
+        
+        # Run the demo.py script inside the container with Azure credentials
+        podman run --rm \
+          -e AZURE_TENANT_ID="${{ secrets.AZURE_TENANT_ID }}" \
+          -e AZURE_CLIENT_ID="${{ secrets.AZURE_CLIENT_ID }}" \
+          -e AZURE_CLIENT_SECRET="${{ secrets.AZURE_CLIENT_SECRET }}" \
+          -e AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+          ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test \
+          uv run python scripts/demo.py ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        
+        if [ $? -ne 0 ]; then
+          echo "❌ Container demo script failed with exit code $?"
+          exit 1
+        fi
+        echo "✅ Container demo script completed successfully"
+        
+    - name: Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Tag and push image
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "Tagging and pushing image..."
+        
+        # Tag with commit SHA and latest
+        podman tag ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:${{ github.sha }}
+        podman tag ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:test ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:latest
+        
+        # Push both tags
+        podman push ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:${{ github.sha }}
+        podman push ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:latest
+        
+        echo "✅ Image published successfully"
+        echo "Image available at: ${{ env.REGISTRY }}/${IMAGE_NAME_LOWER}:latest"
+        
+    - name: Upload test results on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: container-test-failure-logs
+        path: |
+          *.log
+          /tmp/*.log
+          ~/.azure/logs/

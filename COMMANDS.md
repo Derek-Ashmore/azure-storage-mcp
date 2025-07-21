@@ -16,7 +16,7 @@ npx claude-flow@alpha swarm "implement the requirements in INITIAL.md in the roo
 
 # Establish test GitHub workflows
 
-> Results Tag: ```2-test workflows```
+> Results Tag: ```2-test-workflows```
 
 npx claude-flow@alpha swarm "implement the actions in TEST-WORKFLOWS.md in folder instructions. Please make me aware of any additional resources you need." --claude
 
@@ -72,4 +72,113 @@ Error:  Error getting storage account details: Unexpected error: 1 validation er
 versioning_enabled
   Input should be a valid boolean [type=bool_type, input_value=None, input_type=NoneType]
     For further information visit https://errors.pydantic.dev/2.11/v/bool_type
+```
+
+# Add OCI Image
+
+> Results Tag: ```3-add-oci-image```
+
+npx claude-flow@alpha swarm "implement the actions in ADD-PPODMAN.md in folder instructions. Please make me aware of any additional resources you need." --claude
+
+The new workflow encountered the following error. Please fix
+```
+echo "Building OCI image with Podman..."
+  podman build -t ghcr.io/Derek-Ashmore/azure-storage-mcp:test .
+  shell: /usr/bin/bash -e {0}
+  env:
+    REGISTRY: ghcr.io
+    IMAGE_NAME: Derek-Ashmore/azure-storage-mcp
+Building OCI image with Podman...
+Error: tag ghcr.io/Derek-Ashmore/azure-storage-mcp:test: invalid reference format: repository name must be lowercase
+```
+
+The new workflow encountered the following error.  Please fix.
+```
+Successfully installed uv-0.8.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+Notice:  A new release of pip is available: 24.0 -> 25.1.1
+Notice:  To update, run: pip install --upgrade pip
+--> 790c6e87e83a
+STEP 6/15: COPY pyproject.toml uv.lock* ./
+--> 8f95d1b7f9fe
+STEP 7/15: COPY src/ ./src/
+--> af7d61850573
+STEP 8/15: COPY scripts/ ./scripts/
+--> 92d07350acda
+STEP 9/15: RUN uv sync
+Using CPython 3.11.13 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+Resolved 74 packages in 0.82ms
+   Building azure-storage-mcp @ file:///app
+Downloading cryptography (4.2MiB)
+Downloading pydantic-core (1.9MiB)
+Downloading azure-mgmt-monitor (1.2MiB)
+ Downloading pydantic-core
+ Downloading cryptography
+ Downloading azure-mgmt-monitor
+  × Failed to build `azure-storage-mcp @ file:///app`
+  ├─▶ The build backend returned an error
+  ╰─▶ Call to `hatchling.build.build_editable` failed (exit status: 1)
+
+      [stderr]
+      Traceback (most recent call last):
+        File "<string>", line 11, in <module>
+        File
+      "/root/.cache/uv/builds-v0/.tmpIiiojK/lib/python3.11/site-packages/hatchling/build.py",
+      line 83, in build_editable
+          return os.path.basename(next(builder.build(directory=wheel_directory,
+      versions=['editable'])))
+      
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "/root/.cache/uv/builds-v0/.tmpIiiojK/lib/python3.11/site-packages/hatchling/builders/plugin/interface.py",
+      line 90, in build
+          self.metadata.validate_fields()
+        File
+      "/root/.cache/uv/builds-v0/.tmpIiiojK/lib/python3.11/site-packages/hatchling/metadata/core.py",
+      line 266, in validate_fields
+          self.core.validate_fields()
+        File
+      "/root/.cache/uv/builds-v0/.tmpIiiojK/lib/python3.11/site-packages/hatchling/metadata/core.py",
+      line 1366, in validate_fields
+          getattr(self, attribute)
+        File
+      "/root/.cache/uv/builds-v0/.tmpIiiojK/lib/python3.11/site-packages/hatchling/metadata/core.py",
+      line 531, in readme
+          raise OSError(message)
+      OSError: Readme file does not exist: README.md
+
+      hint: This usually indicates a problem with the package or the build
+      environment.
+Error: building at STEP "RUN uv sync": while running runtime: exit status 1
+Error: Process completed with exit code 1.
+```
+
+The image built now. But I'm getting an error on start.
+```
+Testing if container can start properly...
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/app/src/azure_storage_mcp/server.py", line 8, in <module>
+    import mcp.server.stdio
+ModuleNotFoundError: No module named 'mcp'
+Error: Process completed with exit code 1.
+```
+
+We're getting further. Now Azure authentication isn't working with the MCP server starts up.
+```
+Testing MCP Server demo in container...
+   Building azure-storage-mcp @ file:///app
+      Built azure-storage-mcp @ file:///app
+Uninstalled 1 package in 1ms
+Installed 1 package in 1ms
+[DEMO] Azure Storage MCP Server Demo
+============================================================
+[AUTH] Testing authentication...
+2025-07-21 20:59:47,696 - azure_storage_mcp.auth.azure_auth - INFO - {"timestamp": "2025-07-21T20:59:47.696745", "event_type": "authentication", "auth_method": "cli", "success": true, "error": null}
+AzureCliCredential.get_token failed: Please run 'az login' to set up an account
+Error:  Authentication failed. Please run 'az login' first.
+2025-07-21 20:59:49,761 - azure_storage_mcp.auth.azure_auth - WARNING - {"timestamp": "2025-07-21T20:59:49.761283", "event_type": "authentication", "auth_method": "cli", "success": false, "error": "Please run 'az login' to set up an account"}
+Error: Process completed with exit code 1.
 ```

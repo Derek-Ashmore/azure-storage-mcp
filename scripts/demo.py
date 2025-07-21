@@ -29,9 +29,24 @@ def pretty_print(title: str, data: Dict[str, Any]) -> None:
     print(json.dumps(data, indent=2, default=str))
 
 
+def get_auth_method() -> str:
+    """Determine the best auth method based on environment."""
+    import os
+    # If service principal env vars are set, use them
+    if all([
+        os.environ.get("AZURE_TENANT_ID"),
+        os.environ.get("AZURE_CLIENT_ID"), 
+        os.environ.get("AZURE_CLIENT_SECRET")
+    ]):
+        return "service_principal"
+    # Otherwise use default (which includes CLI)
+    return "default"
+
+
 async def demo_list_storage_accounts(subscription_id: str) -> None:
     """Demo listing storage accounts."""
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    auth_manager = AzureAuthManager(auth_method)
     tools = StorageAccountsTools(auth_manager)
     
     request = ListStorageAccountsRequest(subscription_id=subscription_id)
@@ -42,7 +57,8 @@ async def demo_list_storage_accounts(subscription_id: str) -> None:
 
 async def demo_storage_account_details(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting storage account details."""
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    auth_manager = AzureAuthManager(auth_method)
     tools = StorageAccountsTools(auth_manager)
     
     request = GetStorageAccountDetailsRequest(
@@ -63,7 +79,8 @@ async def demo_storage_account_details(subscription_id: str, resource_group: str
 
 async def demo_network_rules(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting network rules."""
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    auth_manager = AzureAuthManager(auth_method)
     tools = NetworkRulesTools(auth_manager)
     
     request = GetNetworkRulesRequest(
@@ -84,7 +101,8 @@ async def demo_network_rules(subscription_id: str, resource_group: str, account_
 
 async def demo_private_endpoints(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting private endpoints."""
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    auth_manager = AzureAuthManager(auth_method)
     tools = NetworkRulesTools(auth_manager)
     
     request = GetPrivateEndpointsRequest(
@@ -105,7 +123,8 @@ async def demo_private_endpoints(subscription_id: str, resource_group: str, acco
 
 async def demo_metrics(subscription_id: str, resource_group: str, account_name: str) -> bool:
     """Demo getting storage metrics."""
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    auth_manager = AzureAuthManager(auth_method)
     tools = MetricsTools(auth_manager)
     
     request = GetStorageMetricsRequest(
@@ -133,7 +152,9 @@ async def main() -> None:
     
     # Test authentication
     print("[AUTH] Testing authentication...")
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    print(f"[AUTH] Using authentication method: {auth_method}")
+    auth_manager = AzureAuthManager(auth_method)
     
     try:
         is_authenticated = await auth_manager.test_authentication()
@@ -171,7 +192,8 @@ async def main() -> None:
     await demo_list_storage_accounts(subscription_id)
     
     # Get first storage account for detailed demos
-    auth_manager = AzureAuthManager('cli')
+    auth_method = get_auth_method()
+    auth_manager = AzureAuthManager(auth_method)
     tools = StorageAccountsTools(auth_manager)
     
     try:
